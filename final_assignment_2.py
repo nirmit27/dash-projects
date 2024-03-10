@@ -4,15 +4,31 @@ import plotly.graph_objects as go
 from dash import Dash, dcc, html, callback, Input, Output
 
 
+df = pd.read_csv('/workspaces/dash-projects/data/historical_automobile_sales.csv')
 year_list = [i for i in range(1980, 2024, 1)]
-replace_types = {"Supperminicar": "Super Mini car", "Mediumfamilycar": "Medium Family car", "Smallfamiliycar": "Small Family car", "Sports": "Sports car", "Executivecar": "Executive car"}
 dropdown_options = [
     {'label': 'Yearly Statistics', 'value': 'Yearly Statistics'},
     {'label': 'Recession Period Statistics', 'value': 'Recession Period Statistics'}
 ]
 
-df = pd.read_csv('/workspaces/dash-projects/data/historical_automobile_sales.csv')
+replace_types = {"Supperminicar": "Super Mini car", "Mediumfamilycar": "Medium Family car", "Smallfamiliycar": "Small Family car", "Sports": "Sports car", "Executivecar": "Executive car"}
+replace_months = {
+    'Jan': 'January',
+    'Feb': 'February',
+    'Mar': 'March',
+    'Apr': 'April',
+    'May': 'May',
+    'Jun': 'June',
+    'Jul': 'July',
+    'Aug': 'August',
+    'Sep': 'September',
+    'Oct': 'October',
+    'Nov': 'November',
+    'Dec': 'December'
+}
+
 df['Vehicle_Type'] = df['Vehicle_Type'].replace(replace_types)
+df['Month'] = df['Month'].replace(replace_months)
 
 
 app = Dash(__name__)
@@ -31,18 +47,18 @@ app.layout = html.Div(children=[
             placeholder='Select a report type',
             style={'textAlign': 'center', 'marginBlock': '0.75rem'}
         )
-    ], style={'width': '80%', 'marginBlock': '1.5rem', 'marginInline':'auto'}),
+    ], style={'width': '60%', 'marginBlock': '1.5rem', 'marginInline':'auto'}),
 
     html.Div(dcc.Dropdown(
             id='select-year',
             options=[{'label': i, 'value': i} for i in year_list],
             placeholder='Select a year',
-    ), style={'width': '80%', 'marginBlock': '1.5rem', 'marginInline':'auto', 'textAlign': 'center'}),
+    ), style={'width': '60%', 'marginBlock': '1.5rem', 'marginInline':'auto', 'textAlign': 'center'}),
 
     html.Div([html.Div(id='output-container', className='chart-grid',
                        style={'display':'flex', 'justifyContent':'center', 'alignItems':'center', 'marginBlock': '2.6rem'}),])
 
-], style={'width':'80%', 'fontFamily': 'Cambria, sans-serif', 'marginInline':'auto',})
+], style={'width':'60%', 'fontFamily': 'Cambria, sans-serif', 'marginInline':'auto',})
 
 
 @app.callback(
@@ -106,8 +122,34 @@ def update_output_container(input_year, selected_statistics):
     
 # Yearly Report Statistics
     elif input_year and selected_statistics == 'Yearly Statistics':
+        y_data = df.groupby('Year')['Automobile_Sales'].mean().reset_index()
+
+        Y_chart1 = dcc.Graph(figure=px.line(y_data, x='Year', y='Automobile_Sales', title='Average Automobile Sales over the Years',
+                  labels={"Year": "Years", "Automobile_Sales": "Automobile Sales"},))
+
+
         yearly_data = df[df['Year'] == int(input_year)]
 
+        monthly_data = yearly_data.groupby('Month')['Automobile_Sales'].sum().reset_index()
+        monthly_data.sort_values(by='Month', key=lambda x: pd.to_datetime(x, format='%B'), inplace=True)
+
+        Y_chart2 = dcc.Graph(figure=px.line(monthly_data, x='Month', y='Automobile_Sales', title=f'Total Monthly Automobile Sales in {input_year}',
+                  labels={"Month": "Month", "Automobile_Sales": "Automobile Sales"},))
+
+
+        vehicle_data = yearly_data.groupby(['Month', 'Vehicle_Type'])['Automobile_Sales'].mean().reset_index()
+
+        vehicle_data.sort_values(by='Month', key=lambda x: pd.to_datetime(x, format='%B'), inplace=True)
+
+        Y_chart3 = dcc.Graph(figure=px.bar(vehicle_data, x='Month', y='Automobile_Sales', color='Vehicle_Type',
+             labels={'Automobile_Sales': 'Average Automobile Sales'},
+             title=f'Average number of vehicles sold by Vehicle Type in {input_year}', barmode='group'))
+
+        
+        adv_data = yearly_data.groupby('Vehicle_Type')['Advertising_Expenditure'].mean().reset_index()
+
+        Y_chart4 = dcc.Graph(figure=px.pie(adv_data, values=adv_data['Advertising_Expenditure'], labels=adv_data['Vehicle_Type'],
+              names=adv_data['Vehicle_Type'], title=f'Total Advertisement Expenditure by Vehicle Type during {input_year}'))
 
         return [
             html.Div(className='chart-item', children=[html.Div(children=Y_chart1),html.Div(children=Y_chart2)],),
