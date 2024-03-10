@@ -21,7 +21,7 @@ app.title = "Automobile Sales Statistics Dashboard"
 
 app.layout = html.Div(children=[
     html.H1(children="Automobile Sales Statistics Dashboard", style={'fontSize': 24, 'textAlign':'center', 'color':'#503D36'}),
-    
+    # 'backgroundColor' : 'lightblue'
     html.Div([
         html.Label("Select Statistics :",),
         html.Br(),
@@ -31,19 +31,18 @@ app.layout = html.Div(children=[
             placeholder='Select a report type',
             style={'textAlign': 'center', 'marginBlock': '0.75rem'}
         )
-    ], style={'width': '80%', 'marginBlock': '2rem', 'marginInline':'auto'}),
+    ], style={'width': '80%', 'marginBlock': '1.5rem', 'marginInline':'auto'}),
 
     html.Div(dcc.Dropdown(
             id='select-year',
             options=[{'label': i, 'value': i} for i in year_list],
             placeholder='Select a year',
-            style={'textAlign': 'center'}
-    ), style={'width': '80%', 'marginBlock': '2rem', 'marginInline':'auto'}),
+    ), style={'width': '80%', 'marginBlock': '1.5rem', 'marginInline':'auto', 'textAlign': 'center'}),
 
     html.Div([html.Div(id='output-container', className='chart-grid',
-                       style={'display':'flex', 'justifyContent':'center', 'alignItems':'center', }),])
+                       style={'display':'flex', 'justifyContent':'center', 'alignItems':'center', 'marginBlock': '2.6rem'}),])
 
-], style={'width':'80%', 'fontFamily': 'Cambria, sans-serif', 'marginInline':'auto'})
+], style={'width':'80%', 'fontFamily': 'Cambria, sans-serif', 'marginInline':'auto',})
 
 
 @app.callback(
@@ -61,7 +60,9 @@ def update_input_container(selected_statistics):
     Output(component_id='output-container', component_property='children'),
     [Input(component_id='select-year', component_property='value'), Input(component_id='dropdown-statistics', component_property='value')])
 
-def update_output_container(selected_year, selected_statistics):
+def update_output_container(input_year, selected_statistics):
+
+# Recession Report Statistics
     if selected_statistics == 'Recession Period Statistics':
         recession_data = df[df['Recession'] == 1]
         
@@ -103,7 +104,15 @@ def update_output_container(selected_year, selected_statistics):
             html.Div(className='chart-item', children=[html.Div(children=R_chart3),html.Div(children=R_chart4)],)
         ]
     
-    # 
+# Yearly Report Statistics
+    elif input_year and selected_statistics == 'Yearly Statistics':
+        yearly_data = df[df['Year'] == int(input_year)]
+
+
+        return [
+            html.Div(className='chart-item', children=[html.Div(children=Y_chart1),html.Div(children=Y_chart2)],),
+            html.Div(className='chart-item', children=[html.Div(children=Y_chart3),html.Div(children=Y_chart4)],)
+        ]
 
 
 if __name__=="__main__":
