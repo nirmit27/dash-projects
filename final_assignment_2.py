@@ -37,7 +37,7 @@ app.title = "Automobile Sales Statistics Dashboard"
 
 app.layout = html.Div(children=[
     html.H1(children="Automobile Sales Statistics Dashboard", style={'fontSize': 24, 'textAlign':'center', 'color':'#503D36'}),
-    # 'backgroundColor' : 'lightblue'
+    
     html.Div([
         html.Label("Select Statistics :",),
         html.Br(),
